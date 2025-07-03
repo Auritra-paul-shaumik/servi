@@ -6,9 +6,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import uvicorn
 import os
+import logging
 
 app = FastAPI()
-CHROMEDRIVER_PATH = "/usr/bin/chromedriver"  # Path in Railway environment
+logger = logging.getLogger(__name__)
 
 @app.post("/start")
 async def start_stream(video_url: str):
@@ -19,12 +20,11 @@ async def start_stream(video_url: str):
     chrome_options.add_argument("--autoplay-policy=no-user-gesture-required")
     chrome_options.add_argument("--window-size=1920,1080")
     
-    driver = webdriver.Chrome(
-        executable_path=CHROMEDRIVER_PATH,
-        options=chrome_options
-    )
-    
     try:
+        # Use Chromedriver provided by Railway plugin
+        driver = webdriver.Chrome(options=chrome_options)
+        
+        logger.info(f"Starting stream for: {video_url}")
         driver.get(video_url)
         
         # Accept cookies if needed
@@ -32,20 +32,25 @@ async def start_stream(video_url: str):
             WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Accept')]"))
             ).click()
+            logger.info("Accepted cookies")
         except:
-            pass
+            logger.info("No cookie acceptance needed")
         
         # Play the video
         driver.execute_script("document.querySelector('video').play()")
+        logger.info("Video playback started")
         
         # Enter fullscreen
         driver.execute_script("document.querySelector('video').requestFullscreen()")
+        logger.info("Entered fullscreen mode")
         
         return {"status": "playing", "stream_url": video_url}
     except Exception as e:
+        logger.error(f"Stream error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        # Keep the stream running (will be managed externally)
+        # Keep the driver running in the background
+        # Railway will manage the process lifecycle
         pass
 
 if __name__ == "__main__":
