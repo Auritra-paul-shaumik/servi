@@ -2,6 +2,7 @@ FROM python:3.11-slim
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
+    RUN apt-get update && apt-get install -y \
     wget \
     curl \
     unzip \
@@ -12,7 +13,6 @@ RUN apt-get update && apt-get install -y \
     libfontconfig1 \
     libxss1 \
     libappindicator1 \
-    libindicator7 \
     libu2f-udev \
     fonts-liberation \
     libasound2 \
